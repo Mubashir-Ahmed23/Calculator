@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultra Futuristic Calculator</title>
+    <link rel="icon" type="image/png" href="cal.png">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+
+    body {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(270deg, #ff00ff, #00ffff, #ff9900);
+      background-size: 600% 600%;
+      animation: bgAnimate 15s ease infinite;
+      overflow: hidden;
+    }
+
+    @keyframes bgAnimate {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+
+    /* Futuristic Loader */
+    .loader {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%; width: 100%;
+      display: flex; justify-content: center; align-items: center;
+      background: rgba(0,0,0,0.9);
+      z-index: 9999;
+      flex-direction: column;
+      color: white;
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+    }
+    .ring {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 8px solid transparent;
+      border-top: 8px solid cyan;
+      border-right: 8px solid magenta;
+      border-bottom: 8px solid yellow;
+      animation: rotate 2s linear infinite;
+      box-shadow: 0 0 25px cyan, 0 0 45px magenta, 0 0 65px yellow;
+    }
+    @keyframes rotate {100%{transform: rotate(360deg)}}
+
+    /* Calculator */
+    .container {
+      max-width: 1200px;
+      width: 95%;
+      height: 90vh;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 1s ease;
+    }
+    .container.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .theme-toggle {
+      cursor: pointer;
+      padding: 8px 15px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      transition: 0.3s;
+    }
+    .theme-toggle:hover {background: rgba(255,255,255,0.4);}
+
+    .display {
+      width: 100%;
+      height: 80px;
+      background: rgba(0,0,0,0.7);
+      color: lime;
+      font-size: 2rem;
+      border-radius: 12px;
+      padding: 15px;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      flex-grow: 1;
+    }
+
+    button {
+      padding: 15px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    }
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px cyan, 0 0 25px magenta;
+    }
+    button:active {transform: scale(0.95);}
+
+    .history {
+      max-height: 120px;
+      overflow-y: auto;
+      margin-top: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px;
+      color: white;
+      font-size: 0.9rem;
+    }
+
+    /* Dark Mode */
+    body.dark {background: #111;}
+    body.dark .container {background: rgba(0,0,0,0.8);}
+    body.dark .display {background: rgba(255,255,255,0.1); color: cyan;}
+  </style>
+</head>
+<body>
+  <!-- Futuristic Loader -->
+  <div class="loader" id="loader">
+    <div class="ring"></div>
+    <p>Loading Ultra Calculator...</p>
+  </div>
+
+  <!-- Calculator -->
+  <div class="container" id="calc">
+    <div class="top-bar">
+      <h2 style="color:white;">⚡ Futuristic Calculator</h2>
+      <div class="theme-toggle" id="themeToggle">🌗 Toggle Theme</div>
+    </div>
+
+    <div class="display" id="display"></div>
+
+    <div class="buttons">
+      <button>(</button><button>)</button><button>sin</button><button>cos</button><button>tan</button><button>log</button>
+      <button>7</button><button>8</button><button>9</button><button>/</button><button>sqrt</button><button>pi</button>
+      <button>4</button><button>5</button><button>6</button><button>*</button><button>^</button><button>C</button>
+      <button>1</button><button>2</button><button>3</button><button>-</button><button>=</button><button>DEL</button>
+      <button>0</button><button>.</button><button>+</button><button id="mic">🎙️</button><button id="speak">🔊</button><button>Ans</button>
+    </div>
+
+    <div class="history" id="history"></div>
+  </div>
+
+  <script>
+    const loader = document.getElementById("loader");
+    const calc = document.getElementById("calc");
+    const display = document.getElementById("display");
+    const historyDiv = document.getElementById("history");
+    const themeToggle = document.getElementById("themeToggle");
+
+    // Loader
+    setTimeout(()=>{
+      loader.style.display="none";
+      calc.classList.add("show");
+    },2500);
+
+    // Calculator Logic
+    let memory = "";
+    let ans = 0;
+
+    function updateDisplay(){display.textContent = memory;}
+    function addToMemory(val){memory+=val;updateDisplay();}
+
+    document.querySelectorAll("button").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        let val = btn.textContent;
+        if(val==="C"){memory="";updateDisplay();}
+        else if(val==="DEL"){memory=memory.slice(0,-1);updateDisplay();}
+        else if(val==="="){calculate();}
+        else if(val==="Ans"){memory+=ans;updateDisplay();}
+        else if(val==="sqrt"){memory+="Math.sqrt(";updateDisplay();}
+        else if(val==="pi"){memory+=Math.PI;updateDisplay();}
+        else if(val==="sin"){memory+="Math.sin(";updateDisplay();}
+        else if(val==="cos"){memory+="Math.cos(";updateDisplay();}
+        else if(val==="tan"){memory+="Math.tan(";updateDisplay();}
+        else if(val==="log"){memory+="Math.log(";updateDisplay();}
+        else if(val==="^"){memory+="**";updateDisplay();}
+        else if(val==="🎙️"){voiceInput();}
+        else if(val==="🔊"){voiceOutput();}
+        else {memory+=val;updateDisplay();}
+      });
+    });
+
+    function calculate(){
+      try{
+        let result = eval(memory);
+        ans = result;
+        display.textContent = result;
+        saveHistory(memory+" = "+result);
+        memory=""+result;
+      }catch{display.textContent="Error";memory="";}
+    }
+
+    // History with localStorage
+    function saveHistory(entry){
+      let hist = JSON.parse(localStorage.getItem("calcHistory"))||[];
+      hist.unshift(entry);
+      if(hist.length>10) hist.pop();
+      localStorage.setItem("calcHistory",JSON.stringify(hist));
+      renderHistory();
+    }
+    function renderHistory(){
+      let hist = JSON.parse(localStorage.getItem("calcHistory"))||[];
+      historyDiv.innerHTML = hist.map(h=>"<div>"+h+"</div>").join("");
+    }
+    renderHistory();
+
+    // Keyboard support
+    document.addEventListener("keydown",(e)=>{
+      if((/[0-9+\-*/().]/).test(e.key)){memory+=e.key;updateDisplay();}
+      else if(e.key==="Enter"){calculate();}
+      else if(e.key==="Backspace"){memory=memory.slice(0,-1);updateDisplay();}
+    });
+
+    // Voice Input
+    function voiceInput(){
+      if(!('webkitSpeechRecognition' in window)){alert("Not Supported");return;}
+      let rec = new webkitSpeechRecognition();
+      rec.lang="en-US";
+      rec.onresult=(e)=>{memory+=e.results[0][0].transcript;updateDisplay();};
+      rec.start();
+    }
+
+    // Voice Output
+    function voiceOutput(){
+      let msg = new SpeechSynthesisUtterance(display.textContent);
+      msg.lang="en-US";
+      speechSynthesis.speak(msg);
+    }
+
+    // Theme toggle
+    themeToggle.addEventListener("click",()=>{document.body.classList.toggle("dark");});
+  </script>
+</body>
+</html>
